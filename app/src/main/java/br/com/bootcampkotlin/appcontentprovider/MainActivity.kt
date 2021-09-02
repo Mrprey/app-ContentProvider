@@ -1,8 +1,10 @@
 package br.com.bootcampkotlin.appcontentprovider
 
 import android.database.Cursor
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.BaseColumns._ID
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.CursorLoader
 import androidx.loader.content.Loader
@@ -26,7 +28,18 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
         noteAdd = findViewById(R.id.ab_add)
         noteAdd.setOnClickListener {}
 
-        adapter = NotesAdapter()
+        adapter = NotesAdapter(object : NoteClickedListener{
+            override fun noteClickedItem(cursor: Cursor) {
+                val id = cursor.getLong(cursor.getColumnIndex(_ID))
+
+            }
+
+            override fun noteRemoveItem(cursor: Cursor?) {
+                val id = cursor?.getLong(cursor.getColumnIndex(_ID))
+                contentResolver.delete(Uri.withAppendedPath(URI_NOTES, id.toString()), null,  null)
+            }
+
+        })
         adapter.setHasStableIds(true)
 
         noteRecyclerView = findViewById(R.id.rv_notes)
