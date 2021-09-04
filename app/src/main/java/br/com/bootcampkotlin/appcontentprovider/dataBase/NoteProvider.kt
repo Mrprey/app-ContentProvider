@@ -1,5 +1,6 @@
 package br.com.bootcampkotlin.appcontentprovider.dataBase
 
+import android.annotation.SuppressLint
 import android.content.ContentProvider
 import android.content.ContentValues
 import android.content.Context
@@ -8,43 +9,42 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.media.UnsupportedSchemeException
 import android.net.Uri
-import android.os.Build
 import android.provider.BaseColumns._ID
-import androidx.annotation.RequiresApi
-import br.com.bootcampkotlin.appcontentprovider.dataBase.NotesDataBaseHelper.Companion.TABLE_NOTES
+import br.com.bootcampkotlin.appcontentprovider.dataBase.NotesDatabaseHelper.Companion.TABLE_NOTES
 
-class NoteProvider : ContentProvider() {
+class NotesProvider : ContentProvider() {
 
     private lateinit var mUriMatcher: UriMatcher
-    private lateinit var dbHelper: NotesDataBaseHelper
+    private lateinit var dbHelper: NotesDatabaseHelper
 
     override fun onCreate(): Boolean {
         mUriMatcher = UriMatcher(UriMatcher.NO_MATCH)
         mUriMatcher.addURI(AUTHORITY, "notes", NOTES)
         mUriMatcher.addURI(AUTHORITY, "notes/#", NOTES_BY_ID)
-        if (context != null){dbHelper = NotesDataBaseHelper(context as Context)}
-
+        if (context != null) { dbHelper = NotesDatabaseHelper(context as Context) }
         return true
     }
 
-    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+
+
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {
         if (mUriMatcher.match(uri) == NOTES_BY_ID) {
             val db: SQLiteDatabase = dbHelper.writableDatabase
-            val linesAffect: Int = db.delete(TABLE_NOTES, "$_ID =?", arrayOf(uri.lastPathSegment))
+            val linesAffect = db.delete(TABLE_NOTES, "$_ID =?", arrayOf(uri.lastPathSegment))
             db.close()
             context?.contentResolver?.notifyChange(uri, null)
             return linesAffect
-
-        } else{
-            throw UnsupportedSchemeException("Uri invalida para exclusão")
+        } else {
+            throw UnsupportedSchemeException("Uri inválida para exclusão!")
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-    override fun getType(uri: Uri): String? = throw UnsupportedSchemeException("não implementado")
 
-    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+
+    override fun getType(uri: Uri): String? = throw UnsupportedSchemeException("Uri não implementado")
+
+
+
     override fun insert(uri: Uri, values: ContentValues?): Uri? {
         if (mUriMatcher.match(uri) == NOTES) {
             val db: SQLiteDatabase = dbHelper.writableDatabase
@@ -53,54 +53,52 @@ class NoteProvider : ContentProvider() {
             db.close()
             context?.contentResolver?.notifyChange(uri, null)
             return insertUri
-        } else{
-            throw UnsupportedSchemeException("Uri invalida para inserção")
+        } else {
+            throw UnsupportedSchemeException("Uri inválida para insierção!")
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-    override fun query(
-        uri: Uri, projection: Array<String>?, selection: String?,
-        selectionArgs: Array<String>?, sortOrder: String?
-    ): Cursor? {
-        return when{
+
+
+    override fun query(uri: Uri, projection: Array<String>?, selection: String?,
+                       selectionArgs: Array<String>?, sortOrder: String?): Cursor? {
+        return when {
             mUriMatcher.match(uri) == NOTES -> {
-                val db : SQLiteDatabase = dbHelper.writableDatabase
-                val cursor = db.query(TABLE_NOTES, projection, selection, selectionArgs, null, null, sortOrder)
+                val db: SQLiteDatabase = dbHelper.writableDatabase
+                val cursor =
+                        db.query(TABLE_NOTES, projection, selection, selectionArgs, null, null, sortOrder)
                 cursor.setNotificationUri(context?.contentResolver, uri)
                 cursor
             }
-            mUriMatcher.match(uri) == NOTES_BY_ID ->{
-                val db = dbHelper.writableDatabase
-                val cursor = db.query(TABLE_NOTES, projection, "$_ID = ?", arrayOf(uri.lastPathSegment), null,
-                         null, sortOrder)
-                cursor.setNotificationUri((context as Context).contentResolver, uri)
+            mUriMatcher.match(uri) == NOTES_BY_ID -> {
+                val db: SQLiteDatabase = dbHelper.writableDatabase
+                val cursor = db.query(TABLE_NOTES, projection, "$_ID = ?", arrayOf(uri.lastPathSegment), null, null, sortOrder)
+                cursor.setNotificationUri(context?.contentResolver, uri)
                 cursor
             }
-            else ->{
-                throw UnsupportedSchemeException("Uri não implementada")
+            else -> {
+                throw UnsupportedSchemeException("Uri não implementada.")
             }
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-    override fun update(
-        uri: Uri, values: ContentValues?, selection: String?,
-        selectionArgs: Array<String>?
-    ): Int {
-        if (mUriMatcher.match(uri) == NOTES_BY_ID){
-            val db = dbHelper.writableDatabase
+
+
+    override fun update(uri: Uri, values: ContentValues?, selection: String?,
+                        selectionArgs: Array<String>?): Int {
+        if (mUriMatcher.match(uri) == NOTES_BY_ID) {
+            val db: SQLiteDatabase = dbHelper.writableDatabase
             val linesAffect = db.update(TABLE_NOTES, values, "$_ID = ?", arrayOf(uri.lastPathSegment))
             db.close()
             context?.contentResolver?.notifyChange(uri, null)
             return linesAffect
-        } else{
-            throw UnsupportedSchemeException("Uri não implementada")
+        } else {
+            throw UnsupportedSchemeException("Uri não implementada.")
         }
     }
 
     companion object {
-        const val AUTHORITY = "br.com.bootcampkotlin.appcontentprovider.provider"
+        const val AUTHORITY = "com.courses.applicationcontentprovider.provider"
         val BASE_URI = Uri.parse("content://$AUTHORITY")
         val URI_NOTES = Uri.withAppendedPath(BASE_URI, "notes")
 
